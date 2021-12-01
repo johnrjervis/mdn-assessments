@@ -1,2 +1,2 @@
-# mdn-multimedia
-MDN's "Mozilla Splash Page" assessment
+# mdn-assessments
+My solutions to MDN's various assessments for their HTML, CSS & JS courses.
