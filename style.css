@@ -1,0 +1,94 @@
+* {
+    font-weight: bold;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    padding-bottom: 15px;
+    text-align: center;
+}
+
+ol {
+    margin: 0px;
+    padding: 0px 10px;
+}
+
+h2 {    
+    margin: 0px;
+    padding: 10px;
+}
+
+li {
+    padding: 10px 10px 10px 25px;
+    border: 8px solid black;
+    border-radius: 15px;
+    margin: 15px;
+    list-style-position: inside;
+}
+
+a {
+    text-align: center;
+}
+
+a:first-child {
+    font-size: 1.3em;
+}
+
+a:last-child {
+    padding-top: 4px;
+    font-size: 0.8em;
+}
+
+a:last-child:before {
+    content: '(';
+}
+
+a:last-child:after {
+    content: ')';
+}
+
+.html li {
+    border-color: red;
+}
+
+
+.html li:hover, .html li:hover a {
+    color: white;
+    background-color: red;
+}
+
+.css li {
+    border-color: green;
+}
+
+.css li:hover, .css li:hover a {
+    color: white;
+    background-color: green;
+}
+
+.js li {
+    border-color: blue;
+}
+
+.js li:hover, .js li:hover a {
+    color: white;
+    background-color: blue;
+}
+
+a {
+    display: block
+}
+
+li:hover a:hover {
+    color: yellow;
+}
