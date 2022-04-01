@@ -1,16 +1,8 @@
-// score counter and display
-
-let scorePara = document.querySelector('p');
-let ballsCount = 0;
-
-function updateScore() {
-  scorePara.textContent = `Ball count: ${ ballsCount }`;
-}
-
-// setup canvas
+// set up canvas
 
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
+const para = document.querySelector('p');
 
 const width = canvas.width = window.innerWidth;
 const height = canvas.height = window.innerHeight;
@@ -18,197 +10,201 @@ const height = canvas.height = window.innerHeight;
 // function to generate random number
 
 function random(min, max) {
-  const num = Math.floor(Math.random() * (max - min + 1)) + min;
-  return num;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// define Shape constructor
-function Shape(x, y, velX, velY) {
-  this.x = x;
-  this.y = y;
-  this.velX = velX;
-  this.velY = velY;
+// function to generate random RGB color value
+
+function randomRGB() {
+  return `rgb(${random(0, 255)},${random(0, 255)},${random(0, 255)})`;
 }
 
-// define the EvilCircle class
-function EvilCircle(x, y) {
-  Shape.call(this, x, y, 20, 20);
-  this.color = 'white';
-  this.size = 10;
+// function to update the BallCount in the paragraph
+
+function updateBallCountPara(value) {
+  para.textContent = `Ball count: ${value}`;
 }
 
-EvilCircle.prototype = Object.create(Shape.prototype);
-Object.defineProperty(EvilCircle.prototype, 'constructor', {
-  value: EvilCircle,
-  enumerable: false,
-  writeable: true
-});
+// Shape is the parent class for Ball and EvilCircle
 
-// EvilCircle methods
-EvilCircle.prototype.draw = function() {
-  ctx.beginPath();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = this.color;
-  ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
-  ctx.stroke();
-};
+class Shape {
 
-EvilCircle.prototype.checkBounds = function() {
-  if((this.x + this.size) >= width) {
-    this.x = width - this.size;
-  }
+   constructor(x, y, velX, velY) {
+      this.x = x;
+      this.y = y;
+      this.velX = velX;
+      this.velY = velY;
+   }
 
-  if((this.x - this.size) <= 0) {
-    this.x = this.size;
-  }
+}
 
-  if((this.y + this.size) >= height) {
-    this.y = height - this.size;
-  }
+// The EvilCircle is user-controlled and makes Ball objects cease to exist when it catches (i.e. collides with) them
 
-  if((this.y - this.size) <= 0) {
-    this.y = this.size;
-  }
-};
+class EvilCircle extends Shape {
 
-EvilCircle.prototype.setControls = function() {
-  let _this = this;
-  window.onkeydown = function(e) {
-    if (e.key === 'a') {
-      _this.x -= _this.velX;
-    } else if (e.key === 'd') {
-      _this.x += _this.velX;
-    } else if (e.key === 'w') {
-      _this.y -= _this.velY;
-    } else if (e.key === 's') {
-      _this.y += _this.velY;
-    }
-  }
-};
+   constructor(x, y) {
+      super(x, y, 20, 20);
+      this.color = 'white';
+      this.size = 10;
 
-EvilCircle.prototype.collisionDetect = function() {
-  for(let j = 0; j < balls.length; j++) {
-    if(balls[j].exists) {
-      const dx = this.x - balls[j].x;
-      const dy = this.y - balls[j].y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      window.addEventListener('keydown', (e) => {
+         switch(e.key) {
+            case 'a':
+               this.x -= this.velX;
+               break;
+            case 'd':
+               this.x += this.velX;
+               break;
+            case 'w':
+               this.y -= this.velY;
+               break;
+            case 's':
+               this.y += this.velY;
+               break;
+         }
+      });
 
-      if (distance < this.size + balls[j].size) {
-        balls[j].exists = false;
-        ballsCount--;
-        updateScore();
+   }
+
+   draw() {
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = this.color;
+      ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+      ctx.stroke();
+   }
+
+   checkBounds() {
+      if ((this.x + this.size) > width) {
+         this.x = width - this.size;
       }
-    }
-  }
-};
 
-// define the Ball class
-function Ball(x, y, velX, velY, color, size) {
-  Shape.call(this, x, y, velX, velY);
-  this.color = color;
-  this.size = size;
-  this.exists = true;
+      if ((this.x - this.size) < 0) {
+         this.x = this.size;
+      }
+
+      if ((this.y + this.size) > height) {
+         this.y = height - this.size;
+      }
+
+      if ((this.y - this.size) < 0) {
+         this.y = this.size;
+      }
+   }
+
+   collisionDetect() {
+      for (const ball of balls) {
+         if (ball.exists) {
+            const dx = this.x - ball.x;
+            const dy = this.y - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < this.size + ball.size) {
+              ball.exists = false;
+              ballCount -= 1;
+              updateBallCountPara(ballCount);
+            }
+         }
+      }
+   }
+
 }
 
-Ball.prototype = Object.create(Shape.prototype);
-Object.defineProperty(Ball.prototype, 'constructor', {
-  value: Ball,
-  enumerable: false,
-  writeable: true
-});
+// Ball objects bounce around the screen and change colour when they collide with other ball objects
 
-// define ball draw method
+class Ball extends Shape {
 
-Ball.prototype.draw = function() {
-  ctx.beginPath();
-  ctx.fillStyle = this.color;
-  ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
-  ctx.fill();
-};
+   constructor(x, y, velX, velY, color, size) {
+      super(x, y, velX, velY);
+      this.color = color;
+      this.size = size;
+      this.exists = true;
+   }
 
-// define ball update method
+   draw() {
+      ctx.beginPath();
+      ctx.fillStyle = this.color;
+      ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+      ctx.fill();
+   }
 
-Ball.prototype.update = function() {
-  if((this.x + this.size) >= width) {
-    this.velX = -(this.velX);
-  }
-
-  if((this.x - this.size) <= 0) {
-    this.velX = -(this.velX);
-  }
-
-  if((this.y + this.size) >= height) {
-    this.velY = -(this.velY);
-  }
-
-  if((this.y - this.size) <= 0) {
-    this.velY = -(this.velY);
-  }
-
-  this.x += this.velX;
-  this.y += this.velY;
-};
-
-// define ball collision detection
-
-Ball.prototype.collisionDetect = function() {
-  for(let j = 0; j < balls.length; j++) {
-    if(!(this === balls[j]) && balls[j].exists) {
-      const dx = this.x - balls[j].x;
-      const dy = this.y - balls[j].y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance < this.size + balls[j].size) {
-        balls[j].color = this.color = 'rgb(' + random(0,255) + ',' + random(0,255) + ',' + random(0,255) +')';
+   update() {
+      if ((this.x + this.size) >= width) {
+         this.velX = -(this.velX);
       }
-    }
-  }
-};
 
-// define array to store balls and populate it
+      if ((this.x - this.size) <= 0) {
+         this.velX = -(this.velX);
+      }
 
-let balls = [];
+      if ((this.y + this.size) >= height) {
+         this.velY = -(this.velY);
+      }
 
-while(balls.length < 25) {
-  const size = random(10,20);
-  let ball = new Ball(
-    // ball position always drawn at least one ball width
-    // away from the edge of the canvas, to avoid drawing errors
-    random(0 + size,width - size),
-    random(0 + size,height - size),
-    random(-7,7),
-    random(-7,7),
-    'rgb(' + random(0,255) + ',' + random(0,255) + ',' + random(0,255) +')',
-    size
-  );
+      if ((this.y - this.size) <= 0) {
+         this.velY = -(this.velY);
+      }
+
+      this.x += this.velX;
+      this.y += this.velY;
+   }
+
+   collisionDetect() {
+      for (const ball of balls) {
+         if (!(this === ball) && ball.exists) {
+            const dx = this.x - ball.x;
+            const dy = this.y - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < this.size + ball.size) {
+              ball.color = this.color = randomRGB();
+            }
+         }
+      }
+   }
+
+}
+
+const balls = [];
+let ballCount = 0;
+
+while (balls.length < 25) {
+   const size = random(10,20);
+   const ball = new Ball(
+      // ball position always drawn at least one ball width
+      // away from the edge of the canvas, to avoid drawing errors
+      random(0 + size,width - size),
+      random(0 + size,height - size),
+      random(-7,7),
+      random(-7,7),
+      randomRGB(),
+      size
+   );
+
   balls.push(ball);
-  ballsCount++;
+  ballCount += 1;
+  updateBallCountPara(ballCount);
 }
 
-let theEvilCircle = new EvilCircle(width / 2, height /2);
-theEvilCircle.setControls();
-
-updateScore();
-
-// define loop that keeps drawing the scene constantly
+const theEvilCircle = new EvilCircle(width / 2, height / 2);
 
 function loop() {
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(0,0,width,height);
+   ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+   ctx.fillRect(0, 0,  width, height);
 
-  theEvilCircle.draw();
-  theEvilCircle.checkBounds();
-  theEvilCircle.collisionDetect();
+   for (const ball of balls) {
+      if (ball.exists) {
+         ball.draw();
+         ball.update();
+         ball.collisionDetect();
+      }
+   }
 
-  for(let i = 0; i < balls.length; i++) {
-    if (balls[i].exists) {
-      balls[i].draw();
-      balls[i].update();
-      balls[i].collisionDetect();
-    }
-  }
+   theEvilCircle.checkBounds();
+   theEvilCircle.draw();
+   theEvilCircle.collisionDetect();
 
-  requestAnimationFrame(loop);
+   requestAnimationFrame(loop);
 }
 
 loop();
